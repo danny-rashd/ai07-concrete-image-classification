@@ -1,8 +1,7 @@
 # Import packages
-import os,datetime,pathlib
+import pathlib
 import tensorflow as tf
-from tensorflow.keras import layers,losses,optimizers,callbacks,applications
-from tensorflow.keras.callbacks import EarlyStopping, TensorBoard
+from tensorflow.keras import layers,losses,optimizers,applications
 from tensorflow.keras.utils import image_dataset_from_directory, plot_model
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,7 +14,7 @@ SEED =12345
 IMG_SIZE = (128,128)
 BATCH_SIZE = 32
 train_data = image_dataset_from_directory(DATA_PATH,
-                                          validation_split=0.3,
+                                          validation_split=0.2,
                                           subset='training',
                                           seed=SEED,
                                           shuffle=True,
@@ -24,7 +23,7 @@ train_data = image_dataset_from_directory(DATA_PATH,
                                           )
 
 validation_data = image_dataset_from_directory(DATA_PATH,
-                                               validation_split=0.3,
+                                               validation_split=0.2,
                                                subset='validation',
                                                seed=SEED,
                                                shuffle=True,
@@ -39,13 +38,13 @@ val_data = validation_data.skip(val_batches//5)
 # Display examples of data
 class_names = train_data.class_names
 
-plt.figure(figsize=(10,10))
-for images,labels in train_data.take(1):
-    for i in range(4):
-        ax = plt.subplot(2,2,i+1)
-        plt.imshow(images[i].numpy().astype("uint8"))
-        plt.title(class_names[labels[i]])
-        plt.axis('off') 
+plt.figure(figsize=(10, 10))
+for images, labels in train_data.take(1):
+  for i in range(4):
+    ax = plt.subplot(2, 2, i + 1)
+    plt.imshow(images[i].numpy().astype("uint8"))
+    plt.title(class_names[labels[i]])
+    plt.axis("off")
                              
 # Create Prefetch for train,test,val data
 AUTOTUNE = tf.data.AUTOTUNE
@@ -55,7 +54,7 @@ pf_val = val_data.prefetch(buffer_size= AUTOTUNE)
 
 # Augmentation layer
 data_augmentation = tf.keras.Sequential()
-data_augmentation.add(layers.RandomFlip('horizontal'))
+data_augmentation.add(layers.RandomFlip('horizontal_and_vertical'))
 data_augmentation.add(layers.RandomRotation(0.2))
 
 # Feature extraction layer
@@ -97,19 +96,14 @@ loss =losses.SparseCategoricalCrossentropy()
 
 model.compile(optimizer=optimizer, loss=loss,metrics=['accuracy'])
 
-# Tensorboard callbacks
-TB_DIR = r'tb_logs'
-LOG_PATH = os.path.join(TB_DIR,'ai07-concrete',datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
-tb = TensorBoard(log_dir=LOG_PATH)
-
 # Train Model
 EPOCHS = 5
-history = model.fit(pf_train, validation_data=(pf_val),epochs=EPOCHS, callbacks=[tb])
+history = model.fit(pf_train, validation_data=(pf_val),epochs=EPOCHS)
 
 # Finetune base model layer
 base_model.trainable =True 
 for layer in base_model.layers[:100]:
-    layer.trainabl = False
+    layer.trainable = False
 
 # Recompile model
 optimizer = optimizers.RMSprop(learning_rate=lr_schedule)
@@ -121,8 +115,7 @@ NEW_EPOCH = EPOCHS + fine_tune_epoch
 history_fine = model.fit(pf_train,
                          validation_data=(pf_val),
                          epochs=NEW_EPOCH,
-                         initial_epoch=history.epoch[-1],
-                         callbacks=[tb])
+                         initial_epoch=history.epoch[-1])
 # Model evaluation
 test_loss, test_accuracy = model.evaluate(pf_test)
 print("====================MODEL EVALUATION======================")
@@ -135,4 +128,3 @@ predicted_labels  = np.argmax(model.predict(image_batch),axis=1)
 
 # Compare label against predictions
 label_vs_prediction = np.transpose(np.vstack((label_batch,predicted_labels)))
-
