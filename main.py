@@ -61,7 +61,7 @@ data_augmentation.add(layers.RandomRotation(0.2))
 # (a) Input processing
 preprocess_input = applications.resnet50.preprocess_input
 
-# (b) create base model using mobilenetv2
+# (b) create base model using ResNet50
 IMG_SHAPE = IMG_SIZE + (3,)
 base_model = applications.ResNet50(input_shape=IMG_SHAPE,
                                       include_top=False,

@@ -50,4 +50,4 @@ Distributed under GNU General Public License v3.0. See [LICENSE](LICENSE) for mo
 ## Acknowledgements
 -  [TensorFlow - Image Classification](https://www.tensorflow.org/tutorials/images/classification)
 -  [MobileNetV2 vs ResNet50](https://analyticsindiamag.com/mobilenet-vs-resnet50-two-cnn-transfer-learning-light-frameworks/#:~:text=As%20we%20can%20see%20in,accuracy%2065%25%20in%20100%20epochs.)
--  Kong Kah Chun - SHRDC Technical Instructor [Github](https://github.com/ch4mploo/)
+-  Kah Chun Kong - SHRDC Technical Instructor [![Github](https://img.shields.io/badge/Github-171515?style=flat-square&logo=github&logoColor=black)](https://github.com/ch4mploo/)
