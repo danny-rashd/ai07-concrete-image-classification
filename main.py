@@ -1,7 +1,7 @@
 # Import packages
 import pathlib
 import tensorflow as tf
-from tensorflow.keras import layers,losses,optimizers,applications
+from tensorflow.keras import layers, losses, optimizers, applications
 from tensorflow.keras.utils import image_dataset_from_directory, plot_model
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,16 +10,16 @@ import matplotlib.pyplot as plt
 FILE_DIR = r'dataset'
 DATA_PATH = pathlib.Path(FILE_DIR)
 
-SEED =12345
-IMG_SIZE = (128,128)
+SEED = 12345
+IMG_SIZE = (128, 128)
 BATCH_SIZE = 32
 train_data = image_dataset_from_directory(DATA_PATH,
                                           validation_split=0.2,
                                           subset='training',
                                           seed=SEED,
                                           shuffle=True,
-                                          image_size = IMG_SIZE,
-                                          batch_size = BATCH_SIZE
+                                          image_size=IMG_SIZE,
+                                          batch_size=BATCH_SIZE
                                           )
 
 validation_data = image_dataset_from_directory(DATA_PATH,
@@ -27,8 +27,8 @@ validation_data = image_dataset_from_directory(DATA_PATH,
                                                subset='validation',
                                                seed=SEED,
                                                shuffle=True,
-                                               image_size =IMG_SIZE,
-                                               batch_size =BATCH_SIZE)
+                                               image_size=IMG_SIZE,
+                                               batch_size=BATCH_SIZE)
 
 # Split validation into val &test
 val_batches = tf.data.experimental.cardinality(validation_data)
@@ -40,17 +40,17 @@ class_names = train_data.class_names
 
 plt.figure(figsize=(10, 10))
 for images, labels in train_data.take(1):
-  for i in range(4):
-    ax = plt.subplot(2, 2, i + 1)
-    plt.imshow(images[i].numpy().astype("uint8"))
-    plt.title(class_names[labels[i]])
-    plt.axis("off")
-                             
+    for i in range(4):
+        ax = plt.subplot(2, 2, i + 1)
+        plt.imshow(images[i].numpy().astype("uint8"))
+        plt.title(class_names[labels[i]])
+        plt.axis("off")
+
 # Create Prefetch for train,test,val data
 AUTOTUNE = tf.data.AUTOTUNE
 pf_train = train_data.prefetch(buffer_size=AUTOTUNE)
-pf_test = test_data.prefetch(buffer_size= AUTOTUNE)
-pf_val = val_data.prefetch(buffer_size= AUTOTUNE)
+pf_test = test_data.prefetch(buffer_size=AUTOTUNE)
+pf_val = val_data.prefetch(buffer_size=AUTOTUNE)
 
 # Augmentation layer
 data_augmentation = tf.keras.Sequential()
@@ -64,8 +64,8 @@ preprocess_input = applications.resnet50.preprocess_input
 # (b) create base model using ResNet50
 IMG_SHAPE = IMG_SIZE + (3,)
 base_model = applications.ResNet50(input_shape=IMG_SHAPE,
-                                      include_top=False,
-                                      weights='imagenet')
+                                   include_top=False,
+                                   weights='imagenet')
 
 # (c) Freeze layers
 base_model.trainable = False
@@ -85,31 +85,31 @@ x = base_model(x)
 x = global_avg(x)
 outputs = output_layer(x)
 
-model = tf.keras.Model(inputs=inputs,outputs=outputs)
+model = tf.keras.Model(inputs=inputs, outputs=outputs)
 model.summary()
 img_file = 'public/model_plot.png'
 plot_model(model, to_file=img_file, show_shapes=True)
-# Compile 
-lr_schedule  = optimizers.schedules.CosineDecay(0.001,500)
+# Compile
+lr_schedule = optimizers.schedules.CosineDecay(0.001, 500)
 optimizer = optimizers.Adam(learning_rate=lr_schedule)
-loss =losses.SparseCategoricalCrossentropy()
+loss = losses.SparseCategoricalCrossentropy()
 
-model.compile(optimizer=optimizer, loss=loss,metrics=['accuracy'])
+model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 
 # Train Model
 EPOCHS = 5
-history = model.fit(pf_train, validation_data=(pf_val),epochs=EPOCHS)
+history = model.fit(pf_train, validation_data=(pf_val), epochs=EPOCHS)
 
 # Finetune base model layer
-base_model.trainable =True 
+base_model.trainable = True
 for layer in base_model.layers[:100]:
     layer.trainable = False
 
 # Recompile model
 optimizer = optimizers.RMSprop(learning_rate=lr_schedule)
-model.compile(optimizer=optimizer,loss=loss,metrics=['accuracy'])
+model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
 # Continue model training
-fine_tune_epoch = 1 
+fine_tune_epoch = 1
 NEW_EPOCH = EPOCHS + fine_tune_epoch
 
 history_fine = model.fit(pf_train,
@@ -123,8 +123,8 @@ print(f"Test Loss : {test_loss}")
 print(f"Test Accuracy : {test_accuracy}")
 
 # Make predictions
-image_batch,label_batch = pf_test.as_numpy_iterator().next()
-predicted_labels  = np.argmax(model.predict(image_batch),axis=1)
+image_batch, label_batch = pf_test.as_numpy_iterator().next()
+predicted_labels = np.argmax(model.predict(image_batch), axis=1)
 
 # Compare label against predictions
-label_vs_prediction = np.transpose(np.vstack((label_batch,predicted_labels)))
+label_vs_prediction = np.transpose(np.vstack((label_batch, predicted_labels)))
