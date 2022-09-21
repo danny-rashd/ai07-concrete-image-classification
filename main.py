@@ -38,10 +38,10 @@ val_data = validation_data.skip(val_batches//5)
 # Display examples of data
 class_names = train_data.class_names
 
-plt.figure(figsize=(10, 10))
+plt.figure(figsize=(15, 15))
 for images, labels in train_data.take(1):
-    for i in range(4):
-        ax = plt.subplot(2, 2, i + 1)
+    for i in range(16):
+        ax = plt.subplot(4, 4, i + 1)
         plt.imshow(images[i].numpy().astype("uint8"))
         plt.title(class_names[labels[i]])
         plt.axis("off")
@@ -113,7 +113,7 @@ fine_tune_epoch = 1
 NEW_EPOCH = EPOCHS + fine_tune_epoch
 
 history_fine = model.fit(pf_train,
-                         validation_data=(pf_val),
+                         validation_data=pf_val,
                          epochs=NEW_EPOCH,
                          initial_epoch=history.epoch[-1])
 # Model evaluation
